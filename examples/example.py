@@ -4,8 +4,7 @@ from time import time
 from qiskit.circuit import QuantumCircuit, ParameterVector
 from qiskit.circuit.library import RealAmplitudes
 
-from surfer.qfi import StochasticApproximation, LinearCombination
-from surfer.gradient.reverse_qfi import ReverseQFI
+from surfer.qfi import StochasticApproximation, LinearCombination, ReverseQFI
 
 circuit = RealAmplitudes(7, reps=2)
 values = np.ones(circuit.num_parameters)

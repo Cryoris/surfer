@@ -70,7 +70,10 @@ def _check_1_parameter_per_gate(circuit):
     for inst, _, _ in circuit.data:
         params = inst.params
         if (
-            any(isinstance(params, qiskit.circuit.ParameterExpression))
+            any(
+                isinstance(param, qiskit.circuit.ParameterExpression)
+                for param in params
+            )
             and len(params) > 1
         ):
             raise ValueError(
@@ -80,7 +83,7 @@ def _check_1_parameter_per_gate(circuit):
 
 def _check_no_duplicate_params(circuit):
     # pylint: disable=protected-access
-    for _, gates in circuit._parameter_table:
+    for _, gates in circuit._parameter_table.items():
         if len(gates) > 1:
             raise NotImplementedError(
                 "The product rule is currently not implemented, parameters must be unique."
