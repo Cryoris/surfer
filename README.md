@@ -1,4 +1,4 @@
-# Stochastic approximation of the Quantum Fisher Information
+TODO :)
 
-See ``example.py``.
+See the `examples` folder for some VERY crude examples.
 
