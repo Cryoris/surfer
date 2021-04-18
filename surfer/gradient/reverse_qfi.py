@@ -2,9 +2,10 @@
 
 import numpy as np
 from qiskit.quantum_info import Statevector, Operator
-from .split_circuit import split
-from .gradient_lookup import analytic_gradient
-from .circuit_gradients import _bind
+
+from surfer.tools.split_circuit import split
+from surfer.tools.gradient_lookup import analytic_gradient
+from surfer.tools.bind import bind
 
 
 class ReverseQFI:
@@ -23,9 +24,9 @@ class ReverseQFI:
 
         num_parameters = len(unitaries)
 
-        ansatz = _bind(ansatz, parameter_binds)
+        ansatz = bind(ansatz, parameter_binds)
 
-        bound_unitaries = _bind(unitaries, parameter_binds)
+        bound_unitaries = bind(unitaries, parameter_binds)
 
         phase_fixes = np.zeros(num_parameters, dtype=complex)
         lis = np.zeros((num_parameters, num_parameters), dtype=complex)
@@ -36,7 +37,7 @@ class ReverseQFI:
 
         deriv = analytic_gradient(unitaries[0], paramlist[0][0])
         for _, gate in deriv:
-            _bind(gate, parameter_binds, inplace=True)
+            bind(gate, parameter_binds, inplace=True)
 
         grad_coeffs = [coeff for coeff, _ in deriv]
         grad_states = [phi.evolve(gate) for _, gate in deriv]
@@ -63,7 +64,7 @@ class ReverseQFI:
             deriv = analytic_gradient(uj, paramlist[j][0])
 
             for _, gate in deriv:
-                _bind(gate, parameter_binds, inplace=True)
+                bind(gate, parameter_binds, inplace=True)
 
             # compute |phi> (in general it's a sum of states and coeffs)
             grad_coeffs = [coeff for coeff, _ in deriv]
@@ -89,7 +90,7 @@ class ReverseQFI:
                 ui = unitaries[i]
                 deriv = analytic_gradient(ui, paramlist[i][0])
                 for _, gate in deriv:
-                    _bind(gate, parameter_binds, inplace=True)
+                    bind(gate, parameter_binds, inplace=True)
 
                 # compute |phi> (in general it's a sum of states and coeffs)
                 grad_coeffs_mu = [coeff for coeff, _ in deriv]
