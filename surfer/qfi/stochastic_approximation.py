@@ -6,21 +6,24 @@ import numpy as np
 from qiskit.circuit import QuantumCircuit, ParameterVector
 from qiskit.opflow import StateFn
 
+from .qfi import QFICalculator
 
-class StochasticApproximation:
+
+class StochasticApproximation(QFICalculator):
     """Stochastic approximation of the Quantum Fisher Approximation."""
 
-    def __init__(self, samples: int, perturbation: float):
+    def __init__(self, samples: int, perturbation: float, do_checks: bool = True):
         """
         Args:
             The number of samples.
         """
+        super().__init__(do_checks)
         self.samples = samples
         self.perturbation = perturbation
 
     def compute(
         self,
-        fidelity: Union[
+        circuit: Union[
             Callable[[Tuple[np.ndarray, np.ndarray]], float], QuantumCircuit
         ],
         values: np.ndarray,
@@ -28,13 +31,18 @@ class StochasticApproximation:
         """Compute the QFI.
 
         Args:
-            fidelity: A callable to evaluate the fidelity or a parameterized quantum circuit of
+            circuit: A callable to evaluate the fidelity or a parameterized quantum circuit of
                 which we compute the QFI.
             values: The parameter values at which the QFI is evaluated.
         """
         # wrap into the fidelity if it's a circuit
-        if isinstance(fidelity, QuantumCircuit):
-            fidelity = get_fidelity(fidelity)
+        if isinstance(circuit, QuantumCircuit):
+            if self.do_checks:
+                self.check_inputs(circuit, values)
+
+            fidelity = get_fidelity(circuit)
+        else:
+            fidelity = circuit
 
         # set up variables to store averages
         estimate = np.zeros((values.size, values.size))
@@ -45,7 +53,8 @@ class StochasticApproximation:
 
         return estimate / self.samples
 
-    def _point_sample(self, fidelity, values, perturbation):
+    @staticmethod
+    def _point_sample(fidelity, values, perturbation):
         delta1 = 1 - 2 * np.random.binomial(1, 0.5, values.size)
         delta2 = 1 - 2 * np.random.binomial(1, 0.5, values.size)
         pert1 = perturbation * delta1
@@ -67,6 +76,7 @@ class StochasticApproximation:
         return -2 * sample
 
 
+# pylint: disable=invalid-name
 def get_fidelity(circuit: QuantumCircuit):
     """Convenience function to evaluate the fidelity."""
     x = ParameterVector("x", circuit.num_parameters)

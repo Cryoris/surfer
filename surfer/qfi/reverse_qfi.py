@@ -1,30 +1,30 @@
 """A class to compute gradients of expectation values."""
 
 import numpy as np
-from qiskit.quantum_info import Statevector, Operator
+from qiskit.circuit import QuantumCircuit
+from qiskit.quantum_info import Statevector
 
 from surfer.tools.split_circuit import split
 from surfer.tools.gradient_lookup import analytic_gradient
 from surfer.tools.bind import bind
 
+from .qfi import QFICalculator
 
-class ReverseQFI:
+
+class ReverseQFI(QFICalculator):
     """A class to compute gradients of expectation values."""
 
-    def compute(self, ansatz, values):
-        """
-        Args:
-            operator (OperatorBase): The operator in the expectation value.
-            ansatz (QuantumCircuit): The ansatz in the expecation value.
-            target_parameters (List[Parameter]): The parameters with respect to which to derive.
-                If None, the derivative for all parameters is computed (also bound parameters!).
-        """
-        unitaries, paramlist = split(ansatz, return_parameters=True)
-        parameter_binds = dict(zip(ansatz.parameters, values))
+    # pylint: disable=too-many-locals
+    def compute(self, circuit: QuantumCircuit, values: np.ndarray):
+        if self.do_checks:
+            self.check_inputs(circuit, values)
+
+        unitaries, paramlist = split(circuit, return_parameters=True)
+        parameter_binds = dict(zip(circuit.parameters, values))
 
         num_parameters = len(unitaries)
 
-        ansatz = bind(ansatz, parameter_binds)
+        circuit = bind(circuit, parameter_binds)
 
         bound_unitaries = bind(unitaries, parameter_binds)
 
@@ -33,7 +33,7 @@ class ReverseQFI:
 
         chi = Statevector(bound_unitaries[0])
         psi = chi.copy()
-        phi = Statevector.from_int(0, (2,) * ansatz.num_qubits)
+        phi = Statevector.from_int(0, (2,) * circuit.num_qubits)
 
         deriv = analytic_gradient(unitaries[0], paramlist[0][0])
         for _, gate in deriv:
@@ -42,7 +42,6 @@ class ReverseQFI:
         grad_coeffs = [coeff for coeff, _ in deriv]
         grad_states = [phi.evolve(gate) for _, gate in deriv]
 
-        # TODO compute the phis once
         phase_fixes[0] = sum(
             c_i * chi.conjugate().data.dot(state_i.data)
             for c_i, state_i in zip(grad_coeffs, grad_states)
@@ -60,7 +59,7 @@ class ReverseQFI:
             phi = psi.copy()
 
             # get d_j U_j
-            uj = unitaries[j]
+            uj = unitaries[j]  # pylint: disable=invalid-name
             deriv = analytic_gradient(uj, paramlist[j][0])
 
             for _, gate in deriv:
@@ -87,7 +86,7 @@ class ReverseQFI:
                 lam = lam.evolve(bound_unitaries[i].inverse())
 
                 # get d_i U_i
-                ui = unitaries[i]
+                ui = unitaries[i]  # pylint: disable=invalid-name
                 deriv = analytic_gradient(ui, paramlist[i][0])
                 for _, gate in deriv:
                     bind(gate, parameter_binds, inplace=True)
