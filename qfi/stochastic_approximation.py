@@ -18,9 +18,13 @@ class StochasticApproximation:
         self.samples = samples
         self.perturbation = perturbation
 
-    def compute(self,
-                fidelity: Union[Callable[[Tuple[np.ndarray, np.ndarray]], float], QuantumCircuit],
-                values: np.ndarray):
+    def compute(
+        self,
+        fidelity: Union[
+            Callable[[Tuple[np.ndarray, np.ndarray]], float], QuantumCircuit
+        ],
+        values: np.ndarray,
+    ):
         """Compute the QFI.
 
         Args:
@@ -65,10 +69,12 @@ class StochasticApproximation:
 
 def get_fidelity(circuit: QuantumCircuit):
     """Convenience function to evaluate the fidelity."""
-    x = ParameterVector('x', circuit.num_parameters)
-    y = ParameterVector('y', circuit.num_parameters)
+    x = ParameterVector("x", circuit.num_parameters)
+    y = ParameterVector("y", circuit.num_parameters)
     parameters = x[:] + y[:]  # list of parameters to bind
-    overlap = ~StateFn(circuit.assign_parameters(x)) @ StateFn(circuit.assign_parameters(y))
+    overlap = ~StateFn(circuit.assign_parameters(x)) @ StateFn(
+        circuit.assign_parameters(y)
+    )
 
     def fidelity(x_, y_):
         param_dict = dict(zip(parameters, x_.tolist() + y_.tolist()))
@@ -78,10 +84,12 @@ def get_fidelity(circuit: QuantumCircuit):
     return fidelity
 
 
-def stochastic_approximation(circuit: QuantumCircuit,
-                             values: np.ndarray,
-                             samples: int = 100,
-                             perturbation: float = 0.01) -> np.ndarray:
+def stochastic_approximation(
+    circuit: QuantumCircuit,
+    values: np.ndarray,
+    samples: int = 100,
+    perturbation: float = 0.01,
+) -> np.ndarray:
     """Convenience function to call stochastic approximation."""
     sa = StochasticApproximation(samples, perturbation)
     return sa.compute(circuit, values)
