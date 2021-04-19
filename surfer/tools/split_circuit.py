@@ -29,7 +29,7 @@ def split(
             params = [
                 param
                 for param in op[0].params
-                if isinstance(param, ParameterExpression)
+                if isinstance(param, ParameterExpression) and len(param.parameters) > 0
             ]
         elif isinstance(parameters, Parameter):
             if op[0].definition is not None:

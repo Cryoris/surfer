@@ -19,7 +19,7 @@ class ReverseQFI(QFICalculator):
         if self.do_checks:
             self.check_inputs(circuit, values)
 
-        unitaries, paramlist = split(circuit, return_parameters=True)
+        unitaries, paramlist = split(circuit, return_parameters=True, parameters="free")
         parameter_binds = dict(zip(circuit.parameters, values))
 
         num_parameters = len(unitaries)

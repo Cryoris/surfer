@@ -6,8 +6,9 @@ from qiskit.circuit.library import RealAmplitudes
 
 from surfer.qfi import StochasticApproximation, LinearCombination, ReverseQFI
 
-circuit = RealAmplitudes(7, reps=2)
+circuit = RealAmplitudes(5, reps=15)
 values = np.ones(circuit.num_parameters)
+print(circuit.num_parameters)
 # x = ParameterVector('x', 2)
 # circuit = QuantumCircuit(1)
 # circuit.ry(x[0], 0)
@@ -15,11 +16,11 @@ values = np.ones(circuit.num_parameters)
 # values = np.array([0.5, 0])
 
 # reference implementation
-lc = LinearCombination()
-start = time()
-reference = lc.compute(circuit, values)
+# lc = LinearCombination()
+# start = time()
+# reference = lc.compute(circuit, values)
 
-print(f"Reference: {time() - start}")
+# print(f"Reference: {time() - start}")
 # print(reference)
 
 # stochastic approximation
@@ -34,4 +35,4 @@ start = time()
 revd = rev.compute(circuit, values)
 
 print(f"Reverse mode: {time() - start}")
-print(np.mean(np.abs(revd - reference)))
+# print(np.mean(np.abs(revd - reference)))
