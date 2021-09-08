@@ -5,6 +5,7 @@ Avoids using the plain name Gradient since that exists in Qiskit and I want to a
 
 from abc import ABC, abstractmethod
 import qiskit
+import qiskit.opflow
 import numpy as np
 
 

@@ -13,6 +13,15 @@ from .gradient import GradientCalculator
 class ReverseGradient(GradientCalculator):
     """Reverse mode gradient calculation, scaling linearly in the number of parameters."""
 
+    def __init__(self, partial_gradient=False, do_checks=True):
+        """
+        Args:
+            partial_gradient (bool): If True, evaluate <psi|H|grad psi> instead of
+                grad <psi|H|psi>.
+        """
+        super().__init__(do_checks)
+        self._partial_gradient = partial_gradient
+
     def compute(self, operator, circuit, values):
         unitaries, paramlist = split(circuit, return_parameters=True)
         parameter_binds = dict(zip(circuit.parameters, values))
@@ -36,17 +45,18 @@ class ReverseGradient(GradientCalculator):
             phi = phi.evolve(uj_dagger)
 
             # TODO use projection
-            grad = (
-                2
-                * sum(
-                    coeff * lam.conjugate().data.dot(phi.evolve(gate).data)
-                    for coeff, gate in deriv
-                ).real
+            grad = sum(
+                coeff * lam.conjugate().data.dot(phi.evolve(gate).data)
+                for coeff, gate in deriv
             )
-            grads += [grad]
+            if self._partial_gradient:
+                grads += [grad]
+            else:
+                grads += [2 * grad.real]
 
             if j > 0:
                 lam = lam.evolve(uj_dagger)
 
-        accumulated, _ = accumulate_product_rule(paramlist, list(reversed(grads)))
+        accumulated, _ = accumulate_product_rule(
+            paramlist, list(reversed(grads)))
         return accumulated
