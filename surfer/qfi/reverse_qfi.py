@@ -14,6 +14,15 @@ from .qfi import QFICalculator
 class ReverseQFI(QFICalculator):
     """A class to compute gradients of expectation values."""
 
+    def __init__(self, do_checks: bool = True, phase_fix: bool = True):
+        """
+        Args:
+            do_checks: Do some sanity checks on the inputs. Can be disabled for performance.
+            phase_fix: Whether or not to include the phase fix.
+        """
+        super().__init__(do_checks)
+        self.phase_fix = phase_fix
+
     # pylint: disable=too-many-locals
     def compute(self, circuit: QuantumCircuit, values: np.ndarray):
         if self.do_checks:
@@ -42,10 +51,11 @@ class ReverseQFI(QFICalculator):
         grad_coeffs = [coeff for coeff, _ in deriv]
         grad_states = [phi.evolve(gate) for _, gate in deriv]
 
-        phase_fixes[0] = sum(
-            c_i * chi.conjugate().data.dot(state_i.data)
-            for c_i, state_i in zip(grad_coeffs, grad_states)
-        )
+        if self.phase_fix:
+            phase_fixes[0] = sum(
+                c_i * chi.conjugate().data.dot(state_i.data)
+                for c_i, state_i in zip(grad_coeffs, grad_states)
+            )
         lis[0, 0] = sum(
             sum(
                 np.conj(c_i) * c_j * state_i.conjugate().data.dot(state_j.data)
@@ -104,10 +114,11 @@ class ReverseQFI(QFICalculator):
                     for c_j, state_j in zip(grad_coeffs, grad_states)
                 )
 
-            phase_fixes[j] = sum(
-                chi.conjugate().data.dot(c_i * (state_i.data))
-                for c_i, state_i in zip(grad_coeffs, grad_states)
-            )
+            if self.phase_fix:
+                phase_fixes[j] = sum(
+                    chi.conjugate().data.dot(c_i * (state_i.data))
+                    for c_i, state_i in zip(grad_coeffs, grad_states)
+                )
             psi = psi.evolve(bound_unitaries[j])
 
         # accumulated, unique_params = accumulate_product_rule(paramlist, list(reversed(grads)))
