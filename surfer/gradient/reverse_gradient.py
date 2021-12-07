@@ -6,6 +6,7 @@ from surfer.tools.split_circuit import split
 from surfer.tools.gradient_lookup import analytic_gradient
 from surfer.tools.bind import bind
 from surfer.tools.accumulate_product_rule import accumulate_product_rule
+from surfer.tools.unroll_parameterized_gates import UnrollParameterizedGates
 
 from .gradient import GradientCalculator
 
@@ -22,8 +23,24 @@ class ReverseGradient(GradientCalculator):
         super().__init__(do_checks)
         self._partial_gradient = partial_gradient
 
+        supported_parameterized_gates = [
+            "rx",
+            "ry",
+            "rz",
+            "cp",
+            "crx",
+            "cry",
+            "crz",
+        ]
+        self.unroller = UnrollParameterizedGates(supported_parameterized_gates)
+
     def compute(self, operator, circuit, values):
-        unitaries, paramlist = split(circuit, return_parameters=True)
+        # try unrolling to a supported basis
+        circuit = self.unroller(circuit)
+
+        unitaries, paramlist = split(circuit, parameters="free", return_parameters=True)
+        print(paramlist)
+        print(circuit.parameters)
         parameter_binds = dict(zip(circuit.parameters, values))
 
         num_parameters = len(unitaries)
@@ -44,7 +61,6 @@ class ReverseGradient(GradientCalculator):
 
             phi = phi.evolve(uj_dagger)
 
-            # TODO use projection
             grad = sum(
                 coeff * lam.conjugate().data.dot(phi.evolve(gate).data)
                 for coeff, gate in deriv
@@ -57,6 +73,5 @@ class ReverseGradient(GradientCalculator):
             if j > 0:
                 lam = lam.evolve(uj_dagger)
 
-        accumulated, _ = accumulate_product_rule(
-            paramlist, list(reversed(grads)))
+        accumulated, _ = accumulate_product_rule(paramlist, list(reversed(grads)))
         return accumulated
