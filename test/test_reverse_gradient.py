@@ -125,9 +125,10 @@ class TestReverseGradient(unittest.TestCase):
 
         values = [-np.pi / 2, np.pi, np.pi / 4, np.pi / 2]
 
-        expected = [-1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)]
+        expected = 1 / np.sqrt(2)
 
         observable = Z ^ Z
 
         grad = ReverseGradient().compute(observable, circuit, values, parameters=x[3])
-        print(grad)
+        self.assertEqual(len(grad), 1)
+        self.assertAlmostEqual(grad[0], expected)

@@ -40,8 +40,14 @@ class ReverseGradient(GradientCalculator):
 
         if parameters is None:
             parameters = "free"
+            original_parameter_order = circuit.parameters
+        else:
+            if not isinstance(parameters, list):
+                parameters = [parameters]
+            original_parameter_order = [
+                param for param in circuit.parameters if param in parameters
+            ]
 
-        original_parameter_order = circuit.parameters
         unitaries, paramlist = split(
             circuit, parameters=parameters, return_parameters=True
         )
