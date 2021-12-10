@@ -9,29 +9,7 @@ class TestUnrollParameterized(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.supported_gates = [
-            "x",
-            "y",
-            "z",
-            "h",
-            "s",
-            "sdg",
-            "t",
-            "tdg",
-            "sx",
-            "sxdg",
-            "rx",
-            "ry",
-            "rz",
-            "cx",
-            "cy",
-            "cz",
-            "cp",
-            "crx",
-            "cry",
-            "crz",
-            "swap",
-        ]
+        self.supported_gates = ["rx", "ry", "rz", "cp", "crx", "cry", "crz"]
 
     def test_only_parameterized_is_unrolled(self):
         """Test only parameterized gates are unrolled."""

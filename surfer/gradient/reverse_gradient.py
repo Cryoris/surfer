@@ -34,13 +34,17 @@ class ReverseGradient(GradientCalculator):
         ]
         self.unroller = UnrollParameterizedGates(supported_parameterized_gates)
 
-    def compute(self, operator, circuit, values):
+    def compute(self, operator, circuit, values, parameters=None):
         # try unrolling to a supported basis
         circuit = self.unroller(circuit)
 
-        unitaries, paramlist = split(circuit, parameters="free", return_parameters=True)
-        print(paramlist)
-        print(circuit.parameters)
+        if parameters is None:
+            parameters = "free"
+
+        original_parameter_order = circuit.parameters
+        unitaries, paramlist = split(
+            circuit, parameters=parameters, return_parameters=True
+        )
         parameter_binds = dict(zip(circuit.parameters, values))
 
         num_parameters = len(unitaries)
@@ -49,11 +53,19 @@ class ReverseGradient(GradientCalculator):
 
         phi = Statevector(circuit)
         lam = phi.evolve(operator)
-        grads = []
+
+        # store gradients in a dictionary to return them in the correct order
+        grads = {param: 0 for param in original_parameter_order}
+
         for j in reversed(range(num_parameters)):
             uj = unitaries[j]  # pylint: disable=invalid-name
 
-            deriv = analytic_gradient(uj, paramlist[j][0])
+            # we currently only support gates with a single parameter,
+            # as soon as we support multiple parameters per gate we have to
+            # iterate over all parameters in the parameter list
+            paramj = paramlist[j][0]
+
+            deriv = analytic_gradient(uj, paramj)
             for _, gate in deriv:
                 bind(gate, parameter_binds, inplace=True)
 
@@ -66,12 +78,11 @@ class ReverseGradient(GradientCalculator):
                 for coeff, gate in deriv
             )
             if self._partial_gradient:
-                grads += [grad]
+                grads[paramj] += grad
             else:
-                grads += [2 * grad.real]
+                grads[paramj] += 2 * grad.real
 
             if j > 0:
                 lam = lam.evolve(uj_dagger)
 
-        accumulated, _ = accumulate_product_rule(paramlist, list(reversed(grads)))
-        return accumulated
+        return list(grads.values())
