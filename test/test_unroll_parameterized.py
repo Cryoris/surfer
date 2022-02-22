@@ -46,3 +46,7 @@ class TestUnrollParameterized(unittest.TestCase):
         expected.cry(x[3], 0, 2)
 
         self.assertEqual(unrolled, expected)
+
+
+if __name__ == "__main__":
+    unittest.main()

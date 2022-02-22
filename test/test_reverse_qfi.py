@@ -101,3 +101,7 @@ class TestReverseQFI(unittest.TestCase):
 
         qfi = ReverseQFI().compute(circuit, values, parameters=[x[0], x[2]])
         self.assertTrue(np.allclose(qfi, expect))
+
+
+if __name__ == "__main__":
+    unittest.main()

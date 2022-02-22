@@ -132,3 +132,7 @@ class TestReverseGradient(unittest.TestCase):
         grad = ReverseGradient().compute(observable, circuit, values, parameters=x[3])
         self.assertEqual(len(grad), 1)
         self.assertAlmostEqual(grad[0], expected)
+
+
+if __name__ == "__main__":
+    unittest.main()
