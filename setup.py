@@ -18,8 +18,8 @@ if not hasattr(setuptools, "find_namespace_packages") or not inspect.ismethod(
 
 setuptools.setup(
     name="surfer",
-    version="0.0.1",
-    description="Gradients and Quantum Fisher Information for Qiskit",
+    version="0.1.0",
+    description="Quantum Circuits: Gradients and Quantum Fisher Information",
     author="Julien Gacon",
     author_email="julien.gacon@epfl.ch",
     license="Apache-2.0",
@@ -38,7 +38,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering",
     ),
-    keywords="qiskit quantum gradients",
+    keywords=["qiskit", "quantum circuit gradients", "quantum fisher information"],
     install_requires=REQUIREMENTS,
     include_package_data=True,
     python_requires=">=3.6",
