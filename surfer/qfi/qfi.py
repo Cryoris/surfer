@@ -3,6 +3,7 @@
 Avoids using the plain name QFI since that exists in Qiskit and I want to avoid conflicts.
 """
 
+from typing import List, Optional
 from abc import ABC, abstractmethod
 import qiskit
 import numpy as np
@@ -19,7 +20,12 @@ class QFICalculator(ABC):
         self.do_checks = do_checks
 
     @abstractmethod
-    def compute(self, circuit: qiskit.QuantumCircuit, values: np.ndarray) -> np.ndarray:
+    def compute(
+        self,
+        circuit: qiskit.QuantumCircuit,
+        values: np.ndarray,
+        parameters: Optional[List[qiskit.circuit.Parameter]] = None,
+    ) -> np.ndarray:
         """Compute the QFI for the given circuit.
 
         The initial state is assumed to be the all-zero state.
@@ -32,7 +38,10 @@ class QFICalculator(ABC):
         raise NotImplementedError
 
     @staticmethod
-    def check_inputs(circuit: qiskit.QuantumCircuit, values: np.ndarray) -> None:
+    def check_inputs(
+        circuit: qiskit.QuantumCircuit,
+        values: np.ndarray,
+    ) -> None:
         """Check the circuit and values.
 
         Args:
@@ -55,7 +64,7 @@ class QFICalculator(ABC):
                 f"and values ({values.size})."
             )
 
-        _check_no_duplicate_params(circuit)
+        # _check_no_duplicate_params(circuit)
 
 
 def _check_circuit_is_unitay(circuit):

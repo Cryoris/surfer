@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from qiskit.circuit import QuantumCircuit, ParameterVector
 from qiskit.opflow import X, Z, Y
-from surfer.qfi import ReverseQFI
+from surfer.qfi import ReverseQFI, LinearCombination
 
 
 class TestReverseQFI(unittest.TestCase):
@@ -22,60 +22,40 @@ class TestReverseQFI(unittest.TestCase):
         qfi = ReverseQFI().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
-    # def test_vector_correctly_sorted(self):
-    #     """Test the gradient vector is correctly sorted."""
-    #     x = ParameterVector("x", 4)
-    #     circuit = QuantumCircuit(2)
-    #     circuit.h([0, 1])
-    #     circuit.ry(x[3], 0)
-    #     circuit.ry(x[1], 1)
-    #     circuit.cx(0, 1)
-    #     circuit.ry(x[0], 0)
-    #     circuit.ry(x[2], 1)
+    def test_correctly_sorted(self):
+        """Test the QFI is correctly sorted."""
+        x = ParameterVector("x", 2)
+        circuit = QuantumCircuit(1)
+        circuit.rx(x[1], 0)
+        circuit.ry(x[0], 0)
 
-    #     values = [-np.pi / 2, np.pi, np.pi / 4, np.pi / 2]
+        values = np.array([0.2, 0.2])
 
-    #     expected = [-1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)]
+        expect = np.array([[0.9605305, 0], [0.0, 1]])
 
-    #     observable = Z ^ Z
+        qfi = ReverseQFI().compute(circuit, values)
+        self.assertTrue(np.allclose(qfi, expect))
 
-    #     grad = ReverseGradient().compute(observable, circuit, values)
+    def test_shared_parameters(self):
+        """Test the product rule is applied correctly."""
+        x = ParameterVector("x", 2)
+        circuit = QuantumCircuit(2)
+        circuit.h([0, 1])
+        circuit.rx(x[0], 0)
+        circuit.ry(x[1], 1)
+        circuit.cz(0, 1)
+        circuit.ry(x[0], 0)
+        circuit.cry(x[1], 1, 0)
 
-    #     self.assertTrue(np.allclose(grad, expected))
+        values = np.array([0.1, 0.2])
 
-    # def test_shared_parameters(self):
-    #     """Test the product rule is applied correctly."""
-    #     x = ParameterVector("x", 2)
-    #     circuit = QuantumCircuit(2)
-    #     circuit.h([0, 1])
-    #     circuit.rx(x[0], 0)
-    #     circuit.ry(x[1], 1)
-    #     circuit.cz(0, 1)
-    #     circuit.ry(x[0], 0)
-    #     circuit.cry(x[1], 1, 0)
+        qfi = ReverseQFI().compute(circuit, values)
+        ref = LinearCombination().compute(circuit, values)
 
-    #     values = [-np.pi / 2, np.pi, np.pi / 2]
-
-    #     expected = [-1, -0.5]
-
-    #     observable = X ^ X
-
-    #     grad = ReverseGradient().compute(observable, circuit, values)
-
-    #     # from qiskit.opflow import Gradient, StateFn
-
-    #     # exp = ~StateFn(observable) @ StateFn(circuit)
-    #     # print(
-    #     #     Gradient()
-    #     #     .convert(exp)
-    #     #     .bind_parameters(dict(zip(circuit.parameters, values)))
-    #     #     .eval()
-    #     # )
-
-    #     self.assertTrue(np.allclose(grad, expected))
+        self.assertTrue(np.allclose(qfi, ref))
 
     def test_decompose(self):
-        """Test the gradient can decompose into a supported basis gate set."""
+        """Test the QFI can decompose into a supported basis gate set."""
         x = ParameterVector("x", 2)
         inner = QuantumCircuit(1)
         inner.h(0)
@@ -94,7 +74,7 @@ class TestReverseQFI(unittest.TestCase):
         self.assertTrue(np.allclose(qfi, expect))
 
     def test_partially_bound_circuit(self):
-        """Test a gradient calculation with a circuit that also has bound parameters."""
+        """Test a QFI calculation with a circuit that also has bound parameters."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
         circuit.rz(0, 0)
@@ -107,8 +87,8 @@ class TestReverseQFI(unittest.TestCase):
         qfi = ReverseQFI().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
-    def test_single_derivative(self):
-        """Test the calculation of a single derivative, not the entire gradient."""
+    def test_individual_derivative(self):
+        """Test the calculation of a individual derivatives, not the entire QFI."""
         x = ParameterVector("x", 4)
         circuit = QuantumCircuit(2)
         circuit.rx(x[0], 0)
