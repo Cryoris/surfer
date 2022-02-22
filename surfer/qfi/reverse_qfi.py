@@ -4,6 +4,7 @@ import numpy as np
 from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import Statevector
 
+from surfer.tools.unroll_parameterized_gates import UnrollParameterizedGates
 from surfer.tools.split_circuit import split
 from surfer.tools.gradient_lookup import analytic_gradient
 from surfer.tools.bind import bind
@@ -23,12 +24,37 @@ class ReverseQFI(QFICalculator):
         super().__init__(do_checks)
         self.phase_fix = phase_fix
 
+        supported_parameterized_gates = [
+            "rx",
+            "ry",
+            "rz",
+            "cp",
+            "crx",
+            "cry",
+            "crz",
+        ]
+        self.unroller = UnrollParameterizedGates(supported_parameterized_gates)
+
     # pylint: disable=too-many-locals
-    def compute(self, circuit: QuantumCircuit, values: np.ndarray):
+    def compute(self, circuit: QuantumCircuit, values: np.ndarray, parameters=None):
         if self.do_checks:
             self.check_inputs(circuit, values)
 
-        unitaries, paramlist = split(circuit, return_parameters=True, parameters="free")
+        circuit = self.unroller(circuit)
+
+        if parameters is None:
+            parameters = "free"
+            original_parameter_order = circuit.parameters
+        else:
+            if not isinstance(parameters, list):
+                parameters = [parameters]
+            original_parameter_order = [
+                param for param in circuit.parameters if param in parameters
+            ]
+
+        unitaries, paramlist = split(
+            circuit, parameters=parameters, return_parameters=True
+        )
         parameter_binds = dict(zip(circuit.parameters, values))
 
         num_parameters = len(unitaries)

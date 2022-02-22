@@ -46,7 +46,7 @@ class QFICalculator(ABC):
             NotImplementedError: If the circuit has repeated parameters.
         """
         _check_circuit_is_unitay(circuit)
-        _check_1_parameter_per_gate(circuit)
+        # _check_1_parameter_per_gate(circuit)
 
         # check the number of parameters
         if circuit.num_parameters != values.size:
