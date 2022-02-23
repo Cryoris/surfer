@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from qiskit.circuit import QuantumCircuit, ParameterVector
-from qiskit.opflow import X, Z, Y
+from qiskit.circuit.library import EfficientSU2, RealAmplitudes
 from surfer.qfi import ReverseQFI, LinearCombination
 
 
@@ -15,12 +15,44 @@ class TestReverseQFI(unittest.TestCase):
         circuit.rx(x[0], 0)
         circuit.ry(x[1], 0)
 
-        values = np.array([0.2, 0.9])
+        values = [0.2, 0.9]
 
         expect = np.array([[1.0, 0.0], [0.0, 0.9605305]])
 
         qfi = ReverseQFI().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
+
+    def test_phasefix(self):
+        """Test with a non-trivial phasefix."""
+        x = ParameterVector("x", 2)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.rz(x[0], 0)
+        circuit.rx(x[1], 0)
+
+        values = np.array([np.pi / 4, 0.1])
+
+        qfi = ReverseQFI().compute(circuit, values)
+        # using Qiskit as reference calculation
+        ref = LinearCombination().compute(circuit, values)
+
+        self.assertTrue(np.allclose(qfi, ref))
+
+    def test_large(self):
+        """Test a larger system. This might take a bit."""
+        circuit = EfficientSU2(num_qubits=4, reps=3, entanglement="full")
+        new_params = ParameterVector("x", 8)
+        flattened = 4 * list(new_params[:])
+        rebound = circuit.assign_parameters(flattened)
+
+        np.random.seed(2)
+        values = np.random.random(rebound.num_parameters)
+
+        qfi = ReverseQFI(phase_fix=True).compute(rebound, values)
+        # using Qiskit as reference calculation
+        ref = LinearCombination().compute(rebound, values)
+
+        self.assertTrue(np.allclose(qfi, ref))
 
     def test_correctly_sorted(self):
         """Test the QFI is correctly sorted."""
@@ -50,6 +82,7 @@ class TestReverseQFI(unittest.TestCase):
         values = np.array([0.1, 0.2])
 
         qfi = ReverseQFI().compute(circuit, values)
+        # using Qiskit as reference calculation
         ref = LinearCombination().compute(circuit, values)
 
         self.assertTrue(np.allclose(qfi, ref))
