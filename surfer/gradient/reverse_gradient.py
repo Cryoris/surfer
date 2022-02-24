@@ -91,4 +91,4 @@ class ReverseGradient(GradientCalculator):
             if j > 0:
                 lam = lam.evolve(uj_dagger)
 
-        return list(grads.values())
+        return np.array(list(grads.values()))
