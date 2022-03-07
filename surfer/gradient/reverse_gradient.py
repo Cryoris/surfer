@@ -1,5 +1,7 @@
 """A class to compute gradients of expectation values."""
 
+import numpy as np
+import scipy.sparse as sp
 from qiskit.quantum_info import Statevector
 
 from surfer.tools.split_circuit import split
@@ -58,7 +60,7 @@ class ReverseGradient(GradientCalculator):
         circuit = bind(circuit, parameter_binds)
 
         phi = Statevector(circuit)
-        lam = phi.evolve(operator)
+        lam = opevolve(operator, phi)
 
         # store gradients in a dictionary to return them in the correct order
         grads = {param: 0 for param in original_parameter_order}
@@ -92,3 +94,10 @@ class ReverseGradient(GradientCalculator):
                 lam = lam.evolve(uj_dagger)
 
         return np.array(list(grads.values()))
+
+
+def opevolve(operator, state):
+    if isinstance(operator, sp.spmatrix):
+        data = operator @ state.data
+        return Statevector(data)
+    return state.evolve(operator)
