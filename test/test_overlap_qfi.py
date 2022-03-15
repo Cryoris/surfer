@@ -15,20 +15,21 @@ class TestOverlapQFI(unittest.TestCase):
     """Tests for the reverse gradient calculation."""
 
     def reference(self, circuit, values):
-        return ReverseQFI().compute(circuit, values)
+        return ReverseQFI(phase_fix=True).compute(circuit, values)
 
     def test_simple(self):
         """Test a simple 1-qubit circuit."""
 
         circuit = RealAmplitudes(2, reps=1)
-        qfi = OverlapQFI().compute(circuit, np.zeros(circuit.num_parameters), None)
-        print(qfi)
+        values = np.zeros(circuit.num_parameters)
+        qfi = OverlapQFI().compute(circuit, values, None)
+        self.assertTrue(np.allclose(qfi, self.reference(circuit, values)))
 
-    @data("0")  # , "+")
-    def test_simple_cliff(self, initial_parameters):
+    @data("0", "+")  # , "+")
+    def test_simple_cliff(self, initial_parameters="0"):
         """Test a simple 1-qubit circuit."""
 
-        circuit = RealAmplitudes(50, reps=1)
+        circuit = RealAmplitudes(3, reps=2)
         if initial_parameters == "0":
             values = np.zeros(circuit.num_parameters)
         else:
@@ -37,16 +38,22 @@ class TestOverlapQFI(unittest.TestCase):
                 values[~i] = np.pi / 2
 
         qfi = OverlapQFI(clifford=True).compute(circuit, values, None)
-        # print(qfi)
-        # print(self.reference(circuit, values))
-        # self.assertTrue(np.allclose(qfi, self.reference(circuit, values)))
+        self.assertTrue(np.allclose(qfi, self.reference(circuit, values)))
 
     def test_dag_to_clifford(self):
-        circuit = RealAmplitudes(2, reps=1).bind_parameters(np.zeros(4))
-        dag = circuit_to_dag(circuit.decompose())
+        circuit = QuantumCircuit(2)
+        circuit.rz(0, 0)
+        circuit.ry(0, 1)
+        circuit.y(0)
+        circuit.z(1)
+        circuit.cx(0, 1)
+        circuit.rz(0, 0)
+        circuit.ry(0, 1)
+        dag = circuit_to_dag(circuit)
         clifford = dag_to_clifford(dag)
-        print(clifford)
-        print(Clifford(Cliffordize()(circuit.decompose())))
+        ref = Clifford(Cliffordize()(circuit))
+
+        self.assertEqual(clifford, ref)
 
 
 if __name__ == "__main__":
