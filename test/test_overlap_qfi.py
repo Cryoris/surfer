@@ -1,8 +1,8 @@
 import unittest
 from ddt import ddt, data
 import numpy as np
-from qiskit.circuit import QuantumCircuit, ParameterVector
-from qiskit.circuit.library import EfficientSU2, RealAmplitudes
+from qiskit.circuit import QuantumCircuit
+from qiskit.circuit.library import RealAmplitudes
 from qiskit.converters import circuit_to_dag
 from qiskit.quantum_info import Clifford
 

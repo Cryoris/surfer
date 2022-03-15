@@ -1,6 +1,5 @@
 """QFI via the overlap method."""
 
-import copy
 from typing import List, Optional
 
 import numpy as np
@@ -8,8 +7,7 @@ import numpy as np
 from qiskit.circuit import ParameterExpression, QuantumCircuit, Parameter
 from qiskit.circuit.library import RYGate, RZGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.dagcircuit import DAGCircuit, DAGOpNode
-from qiskit.exceptions import QiskitError
+from qiskit.dagcircuit import DAGCircuit
 from qiskit.transpiler import AnalysisPass, TransformationPass
 from qiskit.quantum_info import StabilizerState, Statevector, Clifford
 from qiskit.quantum_info.operators.symplectic.clifford_circuits import (
@@ -213,7 +211,7 @@ class Cliffordize(TransformationPass):
 
 
 def is_identity(op):
-    if isinstance(op, RYGate):
+    if isinstance(op, (RYGate, RZGate)):
         return np.isclose(float(op.params[0]), 0)
 
     return np.allclose(op.to_matrix(), np.identity(2))
