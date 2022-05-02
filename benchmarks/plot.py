@@ -8,7 +8,7 @@ if len(sys.argv) < 2:
 
 filename = sys.argv[1]
 data = np.load(sys.argv[1], allow_pickle=True).item()
-x = 4 * (2 ** np.arange(6)) + 4
+x = 4 * (2 ** np.arange(5)) + 4
 
 plt.loglog()
 for label, points in data.items():

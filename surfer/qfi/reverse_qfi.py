@@ -7,7 +7,7 @@ from qiskit.quantum_info import Statevector
 
 from surfer.tools.unroll_parameterized_gates import UnrollParameterizedGates
 from surfer.tools.split_circuit import split
-from surfer.tools.gradient_lookup import analytic_gradient
+from surfer.tools.gradient_lookup import analytic_gradient, extract_single_parameter
 from surfer.tools.bind import bind
 
 from .qfi import QFICalculator
@@ -92,6 +92,7 @@ class ReverseQFI(QFICalculator):
         phi = Statevector.from_int(0, (2,) * circuit.num_qubits)
 
         deriv = analytic_gradient(unitaries[0], paramlist[0][0])
+        print("0:", paramlist[0][0])
         for _, gate in deriv:
             bind(gate, parameter_binds, inplace=True)
 
@@ -109,6 +110,7 @@ class ReverseQFI(QFICalculator):
 
             # get d_j U_j
             uj = unitaries[j]  # pylint: disable=invalid-name
+            print("j:", paramlist[j][0], paramlist[j][0].parameters)
             deriv = analytic_gradient(uj, paramlist[j][0])
 
             for _, gate in deriv:
@@ -130,6 +132,7 @@ class ReverseQFI(QFICalculator):
 
                 # get d_i U_i
                 ui = unitaries[i]  # pylint: disable=invalid-name
+                print("i:", paramlist[i][0])
                 deriv = analytic_gradient(ui, paramlist[i][0])
                 for _, gate in deriv:
                     bind(gate, parameter_binds, inplace=True)
@@ -153,7 +156,8 @@ class ReverseQFI(QFICalculator):
             param: index for index, param in enumerate(original_parameter_order)
         }
         remap = {
-            index: param_to_circuit[plist[0]] for index, plist in enumerate(paramlist)
+            index: param_to_circuit[extract_single_parameter(plist[0])]
+            for index, plist in enumerate(paramlist)
         }
         # remap = {index: plist[0] for index, plist in enumerate(paramlist)}
 

@@ -15,7 +15,10 @@ class StochasticApproximation(QFICalculator):
     def __init__(self, samples: int, perturbation: float, do_checks: bool = True):
         """
         Args:
-            The number of samples.
+            samples: The number of samples per batch.
+            perturbation: The perturbation for the finite difference approximation. Values of
+                0.1 (lots of noise) to 0.01 (low/no noise) usually work well.
+            do_checks: Whether to check the inputs of the ``compute`` method.
         """
         super().__init__(do_checks)
         self.samples = samples
