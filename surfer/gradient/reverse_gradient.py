@@ -40,6 +40,10 @@ class ReverseGradient(GradientCalculator):
         # try unrolling to a supported basis
         circuit = self.unroller(circuit)
 
+        # try converting the operator to a sparse matrix
+        if hasattr(operator, "to_spmatrix"):
+            operator = operator.to_spmatrix()
+
         if parameters is None:
             parameters = "free"
             original_parameter_order = circuit.parameters
