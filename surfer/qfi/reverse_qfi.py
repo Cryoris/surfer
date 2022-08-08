@@ -92,7 +92,6 @@ class ReverseQFI(QFICalculator):
         phi = Statevector.from_int(0, (2,) * circuit.num_qubits)
 
         deriv = analytic_gradient(unitaries[0], paramlist[0][0])
-        print("0:", paramlist[0][0])
         for _, gate in deriv:
             bind(gate, parameter_binds, inplace=True)
 
@@ -110,7 +109,6 @@ class ReverseQFI(QFICalculator):
 
             # get d_j U_j
             uj = unitaries[j]  # pylint: disable=invalid-name
-            print("j:", paramlist[j][0], paramlist[j][0].parameters)
             deriv = analytic_gradient(uj, paramlist[j][0])
 
             for _, gate in deriv:
@@ -132,7 +130,6 @@ class ReverseQFI(QFICalculator):
 
                 # get d_i U_i
                 ui = unitaries[i]  # pylint: disable=invalid-name
-                print("i:", paramlist[i][0])
                 deriv = analytic_gradient(ui, paramlist[i][0])
                 for _, gate in deriv:
                     bind(gate, parameter_binds, inplace=True)

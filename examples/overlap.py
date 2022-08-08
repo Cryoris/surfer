@@ -1,32 +1,48 @@
 import numpy as np
 
 from time import time
+
+from qiskit import IBMQ, Aer
 from qiskit.circuit import QuantumCircuit, ParameterVector
-from qiskit.circuit.library import EfficientSU2
-from qiskit.opflow import QFI, StateFn
+from qiskit.circuit.library import EfficientSU2, RealAmplitudes
+from qiskit.opflow import QFI, StateFn, PauliExpectation, CircuitSampler
 
 from surfer.qfi import OverlapQFI, ReverseQFI
 
-num_qubits = [2, 4, 8, 16]
-reps = 4
-runs = 5
+num_qubits = 27
+coupling_map = [
+    (0, 1), (4, 7), (10, 12), (15, 18), (21, 23), (24, 25),
+    (22, 19), (16, 14), (11, 8), (5, 3),
+] + [
+    (1, 4), (7, 6), (12, 13), (18, 17), (23, 24), (25, 26),
+    (19, 20), (14, 11), (8, 9), (3, 2)
+] + [
+    (7, 10), (12, 15), (18, 21), (25, 22), (19, 16),
+    (13, 14), (8, 5), (2, 1)
+]
+reps = 1
 
+# circuit = EfficientSU2(num_qubits, reps=reps, entanglement=coupling_map).decompose()
+circuit = RealAmplitudes(num_qubits, reps=reps, entanglement=coupling_map).decompose()
 
-def run_single(num_qubits, reps):
-    circuit = EfficientSU2(num_qubits, reps=reps, entanglement="pairwise")
-    values = np.zeros(circuit.num_parameters)
-    start = time()
-    qfi = OverlapQFI(clifford=True).compute(circuit, values)
-    return time() - start
+parameters = circuit.parameters
+values = np.zeros(circuit.num_parameters)
 
+for i in range(circuit.num_qubits):
+    values[~i] = np.pi / 2
 
-times = []
-times_std = []
-for n in num_qubits:
-    results = [run_single(n, reps) for _ in range(runs)]
-    times.append(np.mean(results))
-    times_std.append(np.std(results))
+# start = time()
+# qfi = ReverseQFI(do_checks=False).compute(circuit, values)
+# time_taken = time() - start
 
-    print(f"{n} qubits took {times[-1]}s +- {times_std[-1]}")
+# print(time_taken)
+# print(qfi)
 
-np.save("cliffsimv2_su2r4.npy", np.vstack((num_qubits, times, times_std)))
+start = time()
+qfi = OverlapQFI(clifford=True).compute(circuit, values)
+time_taken = time() - start
+
+print(time_taken)
+print(qfi)
+np.save("qfi_cliff_realamp_plus_kolkata.npy", qfi)
+np.save("qfi_cliff_realamp_+_kolkata.npy", qfi)

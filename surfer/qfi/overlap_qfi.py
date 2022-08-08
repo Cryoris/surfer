@@ -61,13 +61,15 @@ class OverlapQFI(QFICalculator):
         qfi = np.zeros((len(parameters), len(parameters)), dtype=complex)
 
         for i, p_i in enumerate(parameters):
+            print(f"Row {i}/{len(parameters)}")
             # TODO maybe set to 1 directly if possible?
             qfi[i, i] += self.compute_curvature(derivatives, p_i, p_i)
-            qfi[i, i] += self.compute_phasefix(derivatives, p_i, p_i, data)
+            qfi[i, i] -= self.compute_phasefix(derivatives, p_i, p_i, data)
             for j_, p_j in enumerate(parameters[i + 1 :]):
+                print(f"Col {j_}/{len(parameters[i + 1:])}")
                 j = i + 1 + j_
                 qfi[i, j] += self.compute_curvature(derivatives, p_i, p_j)
-                qfi[i, j] += self.compute_phasefix(derivatives, p_i, p_j, data)
+                qfi[i, j] -= self.compute_phasefix(derivatives, p_i, p_j, data)
 
         qfi += np.triu(qfi, k=1).T
 
@@ -79,7 +81,8 @@ class OverlapQFI(QFICalculator):
         data = data_j.compose(inverse(data_i))
         # circuit = circuit_j.compose(circuit_i.inverse())
         # bound = circuit.bind_parameters(values)
-        return np.conj(coeff_i) * coeff_j * self.execute(data)
+        ret = np.conj(coeff_i) * coeff_j * self.execute(data)
+        return ret
 
     def compute_phasefix(self, derivatives, p_i, p_j, data):
         coeff_i, data_i = derivatives[p_i][0]
@@ -88,7 +91,8 @@ class OverlapQFI(QFICalculator):
         left = data.compose(inverse(data_i))
         right = data_j.compose(inverse(data))
 
-        return np.conj(coeff_i) * coeff_j * self.execute(left) * self.execute(right)
+        ret = np.conj(coeff_i) * coeff_j * self.execute(left) * self.execute(right)
+        return ret
 
     def execute(self, data):
         if isinstance(data, Clifford):
@@ -204,8 +208,8 @@ class Cliffordize(TransformationPass):
 
             if is_identity(node.op):
                 dag.remove_op_node(node)
-
-            try_replace_ry(dag, node)
+            else:
+                try_replace_ry(dag, node)
 
         return dag
 

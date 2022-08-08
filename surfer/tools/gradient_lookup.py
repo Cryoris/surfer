@@ -71,12 +71,8 @@ def gradient_lookup(gate):
 def analytic_gradient(circuit, parameter=None, return_parameter=False):
     """Return the analytic gradient of the input circuit."""
 
-    print("Processing", parameter, parameter.parameters)
-    print(circuit)
-
     if parameter is not None:
         single = extract_single_parameter(parameter)
-        print("a", parameter, parameter.parameters)
 
         if single not in circuit.parameters:
             raise ValueError("Parameter not in this circuit.")
@@ -92,8 +88,6 @@ def analytic_gradient(circuit, parameter=None, return_parameter=False):
         op_context += [op[1:]]
         if (parameter is None and len(gate.params) > 0) or parameter in gate.params:
             coeffs_and_grads = gradient_lookup(gate)
-            print("param in gate:", parameter, parameter.parameters)
-            print(type(parameter))
             if not isinstance(parameter, Parameter):
                 # is not a fully decomposed parameter
                 if len(parameter.parameters) > 1:
