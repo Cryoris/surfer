@@ -7,7 +7,7 @@ from qiskit.quantum_info import Statevector
 
 from surfer.tools.unroll_parameterized_gates import UnrollParameterizedGates
 from surfer.tools.split_circuit import split
-from surfer.tools.gradient_lookup import analytic_gradient
+from surfer.tools.gradient_lookup import analytic_gradient, extract_single_parameter
 from surfer.tools.bind import bind
 
 from .qfi import QFICalculator
@@ -153,7 +153,8 @@ class ReverseQFI(QFICalculator):
             param: index for index, param in enumerate(original_parameter_order)
         }
         remap = {
-            index: param_to_circuit[plist[0]] for index, plist in enumerate(paramlist)
+            index: param_to_circuit[extract_single_parameter(plist[0])]
+            for index, plist in enumerate(paramlist)
         }
         # remap = {index: plist[0] for index, plist in enumerate(paramlist)}
 

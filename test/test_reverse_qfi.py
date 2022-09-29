@@ -13,13 +13,14 @@ class TestReverseQFI(unittest.TestCase):
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
         circuit.rx(x[0], 0)
-        circuit.ry(x[1], 0)
+        circuit.ry(0.5 * x[1], 0)
 
         values = [0.2, 0.9]
 
-        expect = np.array([[1.0, 0.0], [0.0, 0.9605305]])
+        expect = np.array([[1.0, 0.0], [0.0, 0.9605305 / 4]])
 
         qfi = ReverseQFI().compute(circuit, values)
+        print(qfi)
         self.assertTrue(np.allclose(qfi, expect))
 
     def test_phasefix(self):
