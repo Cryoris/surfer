@@ -61,12 +61,10 @@ class OverlapQFI(QFICalculator):
         qfi = np.zeros((len(parameters), len(parameters)), dtype=complex)
 
         for i, p_i in enumerate(parameters):
-            print(f"Row {i}/{len(parameters)}")
             # TODO maybe set to 1 directly if possible?
             qfi[i, i] += self.compute_curvature(derivatives, p_i, p_i)
             qfi[i, i] -= self.compute_phasefix(derivatives, p_i, p_i, data)
             for j_, p_j in enumerate(parameters[i + 1 :]):
-                print(f"Col {j_}/{len(parameters[i + 1:])}")
                 j = i + 1 + j_
                 qfi[i, j] += self.compute_curvature(derivatives, p_i, p_j)
                 qfi[i, j] -= self.compute_phasefix(derivatives, p_i, p_j, data)
