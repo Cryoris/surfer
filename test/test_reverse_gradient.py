@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from qiskit.circuit import QuantumCircuit, ParameterVector
-from qiskit.opflow import X, Z, Y
+from qiskit.opflow import X, Z, Y, I
 from surfer.gradient import ReverseGradient
 
 
@@ -132,6 +132,33 @@ class TestReverseGradient(unittest.TestCase):
         grad = ReverseGradient().compute(observable, circuit, values, parameters=x[3])
         self.assertEqual(len(grad), 1)
         self.assertAlmostEqual(grad[0], expected)
+
+    def test_partial(self):
+        x = ParameterVector("x", 2)
+        circuit = QuantumCircuit(2)
+        # circuit.rx(x[0], 0)
+        # circuit.rx(x[1], 1)
+        circuit.rx(x[0], 0)
+        circuit.rzz(x[1], 0, 1)
+
+        values = [0, 0]
+        observable = (X ^ I) + (I ^ X) + 0.25 * (Z ^ Z)
+        expect = -0.5j
+
+        grad = ReverseGradient(partial_gradient=True).compute(
+            observable, circuit, values
+        )
+        print(grad)
+
+        from qiskit.primitives import Estimator
+        from qiskit.algorithms.gradients.lin_comb_estimator_gradient import (
+            LinCombEstimatorGradient,
+            DerivativeType,
+        )
+
+        lcu = LinCombEstimatorGradient(Estimator(), DerivativeType.COMPLEX)
+        res = lcu.run([circuit], [observable.primitive], [values]).result()
+        print(res.gradients[0] / 2)
 
 
 if __name__ == "__main__":

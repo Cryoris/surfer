@@ -1,5 +1,6 @@
 """A class to compute gradients of expectation values."""
 
+from collections.abc import Sequence
 import numpy as np
 import scipy.sparse as sp
 from qiskit.quantum_info import Statevector
@@ -48,7 +49,7 @@ class ReverseGradient(GradientCalculator):
             parameters = "free"
             original_parameter_order = circuit.parameters
         else:
-            if not isinstance(parameters, list):
+            if not isinstance(parameters, Sequence):
                 parameters = [parameters]
             original_parameter_order = [
                 param for param in circuit.parameters if param in parameters

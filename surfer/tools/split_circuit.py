@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from qiskit.circuit import QuantumCircuit, ParameterExpression, Parameter
 
 
@@ -37,7 +38,7 @@ def split(
             else:
                 free_op_params = {}
             params = [parameters] if parameters in free_op_params else []
-        elif isinstance(parameters, list):
+        elif isinstance(parameters, Sequence):
             if op[0].definition is not None:
                 free_op_params = op[0].definition.parameters
             else:

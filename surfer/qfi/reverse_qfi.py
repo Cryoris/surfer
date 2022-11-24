@@ -80,12 +80,6 @@ class ReverseQFI(QFICalculator):
 
         phase_fixes = np.zeros(num_unitaries, dtype=complex)
         lis = np.zeros((num_unitaries, num_unitaries), dtype=complex)
-        # phase_fixes = {param: 0j for param in original_parameter_order}
-        # lis = {
-        #     (original_parameter_order[i], original_parameter_order[j]): 0j
-        #     for j in range(num_parameters)
-        #     for i in range(num_parameters)
-        # }
 
         chi = Statevector(bound_unitaries[0])
         psi = chi.copy()
