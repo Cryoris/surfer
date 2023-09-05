@@ -9,18 +9,15 @@ from ..tools.unroll_parameterized_gates import UnrollParameterizedGates
 class PSR(GradientCalculator):
     """Parameter shift gradient, supporting Clifford optimization."""
 
-    def __init__(self, clifford=False, do_checks=True):
+    def __init__(self, clifford=False):
         """
         Args:
             clifford: If ``True``, try to cast the gradient circuits to Cliffords.
         """
-        super().__init__(do_checks)
+        super().__init__(do_checks=False)
         self.clifford = clifford
 
     def compute(self, operator, circuit, values):
-        if self.do_checks:
-            super().check_inputs(circuit, values)
-
         d = circuit.num_parameters
         shifts = (np.pi / 2 * np.eye(d)).tolist()
 
