@@ -22,8 +22,8 @@ coupling_map = [
 ]
 reps = 1
 
-# circuit = EfficientSU2(num_qubits, reps=reps, entanglement=coupling_map).decompose()
-circuit = RealAmplitudes(num_qubits, reps=reps, entanglement=coupling_map).decompose()
+circuit = RealAmplitudes(num_qubits=10, reps=reps, entanglement="pairwise").decompose()
+# circuit = RealAmplitudes(num_qubits, reps=reps, entanglement=coupling_map).decompose()
 
 parameters = circuit.parameters
 values = np.zeros(circuit.num_parameters)
@@ -44,5 +44,5 @@ time_taken = time() - start
 
 print(time_taken)
 print(qfi)
-np.save("qfi_cliff_realamp_plus_kolkata.npy", qfi)
-np.save("qfi_cliff_realamp_+_kolkata.npy", qfi)
+# np.save("qfi_cliff_realamp_plus_kolkata.npy", qfi)
+# np.save("qfi_cliff_realamp_+_kolkata.npy", qfi)
