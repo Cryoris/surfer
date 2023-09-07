@@ -94,11 +94,15 @@ def empty_like(dag):
 def dag_to_clifford(dag, value_dict={}):
     clifford = Clifford(np.identity(2 * dag.num_qubits()), validate=False)
     qubit_indices = {bit: idx for idx, bit in enumerate(dag.qubits)}
+    has_action = {idx: False for idx in range(dag.num_qubits())}
     for node in dag.topological_op_nodes():
         if node.op.name == "cx":
             control, target = [qubit_indices[qubit] for qubit in node.qargs]
-            clifford = _append_cx(clifford, control, target)
+            if has_action[control]:
+                clifford = _append_cx(clifford, control, target)
+                has_action[target] = True
             continue
+
         # if is_identity(node.op, value):
         # continue
         index = qubit_indices[node.qargs[0]]
@@ -114,11 +118,21 @@ def dag_to_clifford(dag, value_dict={}):
             elif np.isclose(angle, np.pi / 2):
                 clifford = _append_h(clifford, index)
                 clifford = _append_x(clifford, index)
+                has_action[index] = True
             elif np.isclose(angle, -np.pi / 2):
                 clifford = _append_x(clifford, index)
                 clifford = _append_h(clifford, index)
+                has_action[index] = True
+            elif np.isclose(angle, np.pi):
+                clifford = _append_z(clifford, index)
+                clifford = _append_x(clifford, index)
+                has_action[index] = True
+            elif np.isclose(angle, -np.pi):
+                clifford = _append_x(clifford, index)
+                clifford = _append_z(clifford, index)
+                has_action[index] = True
             else:
-                raise NotImplementedError(f"Invalid angle for RY: {angle}")
+                raise ValueError(f"Invalid angle for RY: {angle}")
         elif node.op.name == "rz":
             angle = node.op.params[0]
             if isinstance(angle, ParameterExpression):
@@ -129,15 +143,22 @@ def dag_to_clifford(dag, value_dict={}):
             if np.isclose(angle, 0):
                 pass
             else:
-                raise NotImplementedError(f"Invalid angle for RZ: {angle}")
+                raise ValueError(f"Invalid angle for RZ: {angle}")
+
+            # not setting an action, as this does not active CX gates
+
         elif node.op.name == "x":
             clifford = _append_x(clifford, index)
+            has_action[index] = True
         elif node.op.name == "y":
             clifford = _append_y(clifford, index)
+            has_action[index] = True
         elif node.op.name == "z":
-            clifford = _append_z(clifford, index)
+            if has_action[index]:
+                clifford = _append_z(clifford, index)
         elif node.op.name == "h":
             clifford = _append_h(clifford, index)
+            has_action[index] = True
         else:
             raise NotImplementedError(f"Cannot apply {node.op}.")
 

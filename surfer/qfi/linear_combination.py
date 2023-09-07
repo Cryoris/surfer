@@ -1,10 +1,11 @@
 """Compute the QFI using linear combination of unitaries."""
 
-from typing import Optional
+from __future__ import annotations
 import numpy as np
 
+from qiskit.primitives import Estimator, BaseEstimator
 from qiskit.circuit import QuantumCircuit
-from qiskit.opflow import QFI, StateFn, CircuitSampler, ExpectationBase
+from qiskit_algorithms.gradients import LinCombQGT
 
 from .qfi import QFICalculator
 
@@ -14,31 +15,22 @@ class LinearCombination(QFICalculator):
 
     def __init__(
         self,
-        sampler: Optional[CircuitSampler] = None,
-        expectation: Optional[ExpectationBase] = None,
+        estimator: BaseEstimator | None = None,
         do_checks: bool = True,
     ):
         super().__init__(do_checks)
-        self.sampler = sampler
-        self.expectation = expectation
+        if estimator is None:
+            estimator = Estimator()
+
+        self.qgt = LinCombQGT(estimator)
 
     def compute(self, circuit: QuantumCircuit, values: np.ndarray) -> np.ndarray:
         if self.do_checks:
             self.check_inputs(circuit, values)
 
-        state = StateFn(circuit)
-        param_dict = dict(zip(circuit.parameters, values))
-        qfi = QFI().convert(state)
-
-        if self.expectation is not None:
-            qfi = self.expectation.convert(qfi)
-
-        if self.sampler is not None:
-            qfi = self.sampler.convert(qfi, params=param_dict)
-        else:
-            qfi = qfi.bind_parameters(param_dict)
-
-        return qfi.eval().real
+        qgt = self.qgt.run([circuit], [values]).result().qgts[0]
+        qfi = 4 * np.real(qgt)
+        return qfi
 
 
 def linear_combination(circuit: QuantumCircuit, values: np.ndarray) -> np.ndarray:

@@ -27,7 +27,7 @@ class ForwardGradient(GradientCalculator):
 
         # lam = reduce(lambda x, y: x.evolve(y), ulist, self.state_in).evolve(self.operator)
         zero = Statevector.from_int(0, (2,) * circuit.num_qubits)
-        lam = Statevector(circuit).evolve(operator)
+        lam = Statevector(circuit).evolve(operator).conjugate()
 
         grads = []
         for j in range(num_parameters):
@@ -44,8 +44,9 @@ class ForwardGradient(GradientCalculator):
                     + bound_unitaries[min(num_parameters, j + 1) :]
                 )
                 phi = reduce(lambda x, y: x.evolve(y), dj_unitaries, zero)
-                grad += coeff * lam.conjugate().data.dot(phi.data)
+                grad += coeff * lam.data.dot(phi.data)
             grads += [2 * grad.real]
 
-        accumulated, _ = accumulate_product_rule(paramlist, grads)
-        return accumulated
+        # accumulated, _ = accumulate_product_rule(paramlist, grads)
+        # return accumulated
+        return grads

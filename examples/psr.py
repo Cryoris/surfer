@@ -3,9 +3,10 @@ from time import time
 import numpy as np
 from qiskit.circuit.library import RealAmplitudes
 from qiskit.quantum_info import SparsePauliOp
-from qiskit_algorithms.gradients import ReverseEstimatorGradient
+from qiskit_algorithms.gradients import ReverseEstimatorGradient, ReverseQGT
 
 from surfer.gradient.psr import PSR
+from surfer.qfi.psr import ParameterShiftQFI
 
 n = int(sys.argv[1])
 J = 0.5
@@ -39,3 +40,14 @@ print("Clifford took:", time() - start)
 # print("Reverse took:", time() - start)
 # print(grad)
 # print(np.linalg.norm(grad - ref_grad))
+
+psr = ParameterShiftQFI(clifford=True)
+start = time()
+qgt = psr.compute(ansatz, initial_parameters) / 4
+print("Clifford took:", time() - start)
+
+# reference = ReverseQGT()
+# start = time()
+# ref_qgt = reference.run([ansatz], [initial_parameters]).result().qgts[0].real
+# print("Reverse took:", time() - start)
+# print(np.linalg.norm(qgt - ref_qgt))

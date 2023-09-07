@@ -1,14 +1,19 @@
 import unittest
+from ddt import ddt, data
 import numpy as np
 from qiskit.circuit import QuantumCircuit, ParameterVector
 from qiskit.circuit.library import EfficientSU2, RealAmplitudes
-from surfer.qfi import ReverseQFI, LinearCombination
+from surfer.qfi import ReverseQFI, OverlapQFI, ParameterShiftQFI, LinearCombination
+
+_ALL = [ReverseQFI, OverlapQFI, ParameterShiftQFI]
 
 
-class TestReverseQFI(unittest.TestCase):
+@ddt
+class TestQFI(unittest.TestCase):
     """Tests for the reverse gradient calculation."""
 
-    def test_simple(self):
+    @data(*_ALL)
+    def test_simple(self, qfi_cls):
         """Test a simple 1-qubit circuit."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
@@ -19,11 +24,11 @@ class TestReverseQFI(unittest.TestCase):
 
         expect = np.array([[1.0, 0.0], [0.0, 0.9605305 / 4]])
 
-        qfi = ReverseQFI().compute(circuit, values)
-        print(qfi)
+        qfi = qfi_cls().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
-    def test_phasefix(self):
+    @data(*_ALL)
+    def test_phasefix(self, qfi_cls):
         """Test with a non-trivial phasefix."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
@@ -33,13 +38,14 @@ class TestReverseQFI(unittest.TestCase):
 
         values = np.array([np.pi / 4, 0.1])
 
-        qfi = ReverseQFI().compute(circuit, values)
+        qfi = qfi_cls().compute(circuit, values)
         # using Qiskit as reference calculation
         ref = LinearCombination().compute(circuit, values)
 
         self.assertTrue(np.allclose(qfi, ref))
 
-    def test_large(self):
+    @data(*_ALL)
+    def test_large(self, qfi_cls):
         """Test a larger system. This might take a bit."""
         circuit = EfficientSU2(num_qubits=4, reps=3, entanglement="full")
         new_params = ParameterVector("x", 8)
@@ -49,13 +55,14 @@ class TestReverseQFI(unittest.TestCase):
         np.random.seed(2)
         values = np.random.random(rebound.num_parameters)
 
-        qfi = ReverseQFI(phase_fix=True).compute(rebound, values)
+        qfi = qfi_cls().compute(rebound, values)
         # using Qiskit as reference calculation
         ref = LinearCombination().compute(rebound, values)
 
         self.assertTrue(np.allclose(qfi, ref))
 
-    def test_correctly_sorted(self):
+    @data(*_ALL)
+    def test_correctly_sorted(self, qfi_cls):
         """Test the QFI is correctly sorted."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
@@ -66,10 +73,11 @@ class TestReverseQFI(unittest.TestCase):
 
         expect = np.array([[0.9605305, 0], [0.0, 1]])
 
-        qfi = ReverseQFI().compute(circuit, values)
+        qfi = qfi_cls().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
-    def test_shared_parameters(self):
+    @data(*_ALL)
+    def test_shared_parameters(self, qfi_cls):
         """Test the product rule is applied correctly."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(2)
@@ -82,13 +90,14 @@ class TestReverseQFI(unittest.TestCase):
 
         values = np.array([0.1, 0.2])
 
-        qfi = ReverseQFI().compute(circuit, values)
+        qfi = qfi_cls().compute(circuit, values)
         # using Qiskit as reference calculation
         ref = LinearCombination().compute(circuit, values)
 
         self.assertTrue(np.allclose(qfi, ref))
 
-    def test_decompose(self):
+    @data(*_ALL)
+    def test_decompose(self, qfi_cls):
         """Test the QFI can decompose into a supported basis gate set."""
         x = ParameterVector("x", 2)
         inner = QuantumCircuit(1)
@@ -104,10 +113,11 @@ class TestReverseQFI(unittest.TestCase):
         values = np.array([0.2, 0.9])
         expect = np.array([[1.0, 0.0], [0.0, 0.9605305]])
 
-        qfi = ReverseQFI().compute(circuit, values)
+        qfi = qfi_cls().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
-    def test_partially_bound_circuit(self):
+    @data(*_ALL)
+    def test_partially_bound_circuit(self, qfi_cls):
         """Test a QFI calculation with a circuit that also has bound parameters."""
         x = ParameterVector("x", 2)
         circuit = QuantumCircuit(1)
@@ -118,7 +128,7 @@ class TestReverseQFI(unittest.TestCase):
         values = np.array([0.2, 0.9])
         expect = np.array([[1.0, 0.0], [0.0, 0.9605305]])
 
-        qfi = ReverseQFI().compute(circuit, values)
+        qfi = qfi_cls().compute(circuit, values)
         self.assertTrue(np.allclose(qfi, expect))
 
     def test_individual_derivative(self):
@@ -135,6 +145,36 @@ class TestReverseQFI(unittest.TestCase):
 
         qfi = ReverseQFI().compute(circuit, values, parameters=[x[0], x[2]])
         self.assertTrue(np.allclose(qfi, expect))
+
+
+@ddt
+class TestCliffordQFI(unittest.TestCase):
+    """Test cases for circuits that are Clifford."""
+
+    def setUp(self):
+        super().setUp()
+
+        qc1 = RealAmplitudes(2, reps=1)
+        qc1.h(qc1.qubits)
+
+        self.case1 = (qc1, np.zeros(qc1.num_parameters))
+
+    @data(OverlapQFI, ParameterShiftQFI)
+    def test_simple(self, qfi_cls):
+        """Test a simple case."""
+        circuit, values = self.case1
+        qfi = qfi_cls(clifford=True).compute(circuit, values)
+
+        expect = ReverseQFI().compute(circuit, values)
+        self.assertTrue(np.allclose(qfi, expect))
+
+    @data(OverlapQFI, ParameterShiftQFI)
+    def test_fails(self, qfi_cls):
+        circuit = RealAmplitudes(1, reps=0)
+        values = [0.1]  # not an angle where RY is Clifford
+
+        with self.assertRaises(ValueError):
+            _ = qfi_cls(clifford=True).compute(circuit, values)
 
 
 if __name__ == "__main__":
