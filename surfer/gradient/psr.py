@@ -6,7 +6,7 @@ from ..tools.clifford import Cliffordize, dag_to_clifford
 from ..tools.unroll_parameterized_gates import UnrollParameterizedGates
 
 
-class PSR(GradientCalculator):
+class ParameterShiftGradient(GradientCalculator):
     """Parameter shift gradient, supporting Clifford optimization."""
 
     def __init__(self, clifford=False):

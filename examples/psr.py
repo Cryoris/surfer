@@ -5,7 +5,7 @@ from qiskit.circuit.library import RealAmplitudes
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.gradients import ReverseEstimatorGradient, ReverseQGT
 
-from surfer.gradient.psr import PSR
+from surfer.gradient.psr import ParameterShiftGradient
 from surfer.qfi.psr import ParameterShiftQFI
 
 n = int(sys.argv[1])
@@ -24,7 +24,7 @@ ansatz.x(ansatz.qubits)
 ansatz.h(ansatz.qubits)
 initial_parameters = np.zeros(ansatz.num_parameters)
 
-psr = PSR(clifford=True)
+psr = ParameterShiftGradient(clifford=True)
 start = time()
 grad = psr.compute(hamiltonian, ansatz, initial_parameters)
 print("Clifford took:", time() - start)
